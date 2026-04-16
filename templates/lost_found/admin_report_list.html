@@ -1,0 +1,580 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin - Manage Reports{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-gear me-2"></i>Manage Reports</h1>
+            <a href="{% url 'lost_found:admin_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-primary">{{ total_count }}</h4>
+                        <small class="text-muted">Total Reports</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-warning">{{ pending_count }}</h4>
+                        <small class="text-muted">Pending Approval</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-success">{{ approved_count }}</h4>
+                        <small class="text-muted">Approved</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h4 class="text-danger">{{ flagged_count }}</h4>
+                        <small class="text-muted">Flagged</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Search and Filter -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search_query }}" placeholder="Search reports, users...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Reports</option>
+                            <option value="pending" {% if current_status == 'pending' %}selected{% endif %}>Pending ({{ pending_count }})</option>
+                            <option value="approved" {% if current_status == 'approved' %}selected{% endif %}>Approved ({{ approved_count }})</option>
+                            <option value="flagged" {% if current_status == 'flagged' %}selected{% endif %}>Flagged ({{ flagged_count }})</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="bi bi-search"></i> Filter
+                        </button>
+                        <a href="{% url 'lost_found:admin_report_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Reports Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    {% if current_status == 'pending' %}Pending Reports{% elif current_status == 'approved' %}Approved Reports{% elif current_status == 'flagged' %}Flagged Reports{% else %}All Reports{% endif %}
+                    ({{ reports|length }})
+                </h5>
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="selectAll()">
+                        <i class="bi bi-check-all"></i> Select All
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="bulkAction('approve')" disabled id="bulkApproveBtn">
+                        <i class="bi bi-check-circle"></i> Bulk Approve
+                    </button>
+                    <button class="btn btn-outline-danger" onclick="bulkAction('reject')" disabled id="bulkRejectBtn">
+                        <i class="bi bi-x-circle"></i> Bulk Reject
+                    </button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if reports %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th width="50">
+                                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                </th>
+                                <th width="80">ID</th>
+                                <th>Title</th>
+                                <th width="100">Type</th>
+                                <th width="120">Approval Status</th>
+                                <th width="120">Item Status</th>
+                                <th>Reporter</th>
+                                <th width="100">Date</th>
+                                <th width="200">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in reports %}
+                            <tr class="{% if report.is_flagged %}table-warning{% elif not report.is_approved %}table-light{% endif %}">
+                                <td>
+                                    <input type="checkbox" class="report-checkbox" value="{{ report.pk }}">
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">#{{ report.pk }}</span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ report.title|truncatechars:30 }}</strong>
+                                        {% if report.is_flagged %}
+                                        <i class="bi bi-flag-fill text-warning ms-1" title="Flagged: {{ report.flag_reason }}"></i>
+                                        {% endif %}
+                                    </div>
+                                    <small class="text-muted">{{ report.category.name }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge {% if report.type == 'LOST' %}bg-danger{% else %}bg-success{% endif %}">
+                                        {{ report.get_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if report.is_approved %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle"></i> Approved
+                                    </span>
+                                    {% elif report.is_rejected %}
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-x-circle"></i> Rejected
+                                    </span>
+                                    {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-clock"></i> Pending
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if report.status == 'OPEN' %}bg-primary
+                                        {% elif report.status == 'CLAIMED' %}bg-warning
+                                        {% elif report.status == 'RETURNED' %}bg-success
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ report.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>{{ report.reporter.get_full_name|default:report.reporter.username }}</strong>
+                                    </div>
+                                    <small class="text-muted">{{ report.reporter.email }}</small>
+                                </td>
+                                <td>
+                                    <small>{{ report.created_at|date:"M d, Y" }}</small>
+                                    <br>
+                                    <small class="text-muted">{{ report.created_at|time:"H:i" }}</small>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <a href="{% url 'lost_found:admin_report_detail' report.pk %}" 
+                                           class="btn btn-outline-primary btn-sm" title="View Details">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        
+                                        {% if not report.is_approved and not report.is_rejected %}
+                                        <button class="btn btn-success btn-sm" 
+                                                onclick="approveReport({{ report.pk }})" title="Approve">
+                                            <i class="bi bi-check"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" 
+                                                onclick="rejectReport({{ report.pk }})" title="Reject">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                        {% endif %}
+                                        
+                                        {% if not report.is_flagged %}
+                                        <button class="btn btn-warning btn-sm" 
+                                                onclick="flagReport({{ report.pk }})" title="Flag">
+                                            <i class="bi bi-flag"></i>
+                                        </button>
+                                        {% else %}
+                                        <button class="btn btn-outline-warning btn-sm" 
+                                                onclick="unflagReport({{ report.pk }})" title="Remove Flag">
+                                            <i class="bi bi-flag-fill"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                    <p>No reports found matching your criteria.</p>
+                    {% if current_status != 'all' %}
+                    <a href="{% url 'lost_found:admin_report_list' %}" class="btn btn-primary">
+                        View All Reports
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Reports pagination" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status != 'all' %}&status={{ current_status }}{% endif %}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status != 'all' %}&status={{ current_status }}{% endif %}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_status != 'all' %}&status={{ current_status }}{% endif %}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Rejection Reason Modal -->
+<div class="modal fade" id="rejectionModal" tabindex="-1" aria-labelledby="rejectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="rejectionModalLabel">Reject Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="rejectionForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="rejectReportId" name="report_id">
+                    <div class="mb-3">
+                        <label for="rejectionReason" class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                        <select class="form-select mb-2" id="rejectionReasonSelect" onchange="updateRejectionReason()">
+                            <option value="">Select a reason...</option>
+                            <option value="Inappropriate content">Inappropriate content</option>
+                            <option value="Duplicate report">Duplicate report</option>
+                            <option value="Insufficient information">Insufficient information</option>
+                            <option value="Spam or fake report">Spam or fake report</option>
+                            <option value="Wrong category">Wrong category</option>
+                            <option value="Policy violation">Policy violation</option>
+                            <option value="other">Other (specify below)</option>
+                        </select>
+                        <textarea class="form-control" id="rejectionReason" name="reason" rows="3" 
+                                  placeholder="Please provide a detailed reason for rejection..." required></textarea>
+                        <div class="form-text">This reason will be sent to the user via notification.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" onclick="confirmReject()">
+                    <i class="bi bi-x-circle"></i> Reject Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flag Report Modal -->
+<div class="modal fade" id="flagModal" tabindex="-1" aria-labelledby="flagModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="flagModalLabel">Flag Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="flagForm">
+                    {% csrf_token %}
+                    <input type="hidden" id="flagReportId" name="report_id">
+                    <div class="mb-3">
+                        <label for="flagReason" class="form-label">Flag Reason</label>
+                        <select class="form-select mb-2" id="flagReasonSelect" onchange="updateFlagReason()">
+                            <option value="Requires additional review">Requires additional review</option>
+                            <option value="Suspicious activity">Suspicious activity</option>
+                            <option value="Multiple similar reports">Multiple similar reports</option>
+                            <option value="User complaint received">User complaint received</option>
+                            <option value="other">Other (specify below)</option>
+                        </select>
+                        <textarea class="form-control" id="flagReason" name="reason" rows="3" 
+                                  placeholder="Additional details about why this report is flagged..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmFlag()">
+                    <i class="bi bi-flag"></i> Flag Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let currentReportId = null;
+
+// Approval function
+function approveReport(reportId) {
+    if (confirm('Are you sure you want to approve this report? It will become visible to all users.')) {
+        fetch(`/admin-dashboard/reports/${reportId}/approve/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                location.reload();
+            } else {
+                showAlert('error', data.error || 'Failed to approve report');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'An error occurred while approving the report');
+        });
+    }
+}
+
+// Rejection function
+function rejectReport(reportId) {
+    currentReportId = reportId;
+    document.getElementById('rejectReportId').value = reportId;
+    document.getElementById('rejectionReason').value = '';
+    document.getElementById('rejectionReasonSelect').value = '';
+    new bootstrap.Modal(document.getElementById('rejectionModal')).show();
+}
+
+function updateRejectionReason() {
+    const select = document.getElementById('rejectionReasonSelect');
+    const textarea = document.getElementById('rejectionReason');
+    if (select.value && select.value !== 'other') {
+        textarea.value = select.value;
+    } else if (select.value === 'other') {
+        textarea.value = '';
+        textarea.focus();
+    }
+}
+
+function confirmReject() {
+    const reason = document.getElementById('rejectionReason').value.trim();
+    if (!reason) {
+        alert('Please provide a rejection reason.');
+        return;
+    }
+    
+    fetch(`/admin-dashboard/reports/${currentReportId}/reject/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `reason=${encodeURIComponent(reason)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('info', data.message);
+            bootstrap.Modal.getInstance(document.getElementById('rejectionModal')).hide();
+            location.reload();
+        } else {
+            showAlert('error', data.error || 'Failed to reject report');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while rejecting the report');
+    });
+}
+
+// Flag function
+function flagReport(reportId) {
+    currentReportId = reportId;
+    document.getElementById('flagReportId').value = reportId;
+    document.getElementById('flagReason').value = 'Requires additional review';
+    document.getElementById('flagReasonSelect').value = 'Requires additional review';
+    new bootstrap.Modal(document.getElementById('flagModal')).show();
+}
+
+function unflagReport(reportId) {
+    if (confirm('Remove flag from this report?')) {
+        fetch(`/admin-dashboard/reports/${reportId}/unflag/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                location.reload();
+            } else {
+                showAlert('error', data.error || 'Failed to remove flag');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('error', 'An error occurred while removing flag');
+        });
+    }
+}
+
+function updateFlagReason() {
+    const select = document.getElementById('flagReasonSelect');
+    const textarea = document.getElementById('flagReason');
+    if (select.value !== 'other') {
+        textarea.value = select.value;
+    } else {
+        textarea.value = '';
+        textarea.focus();
+    }
+}
+
+function confirmFlag() {
+    const reason = document.getElementById('flagReason').value.trim();
+    if (!reason) {
+        alert('Please provide a flag reason.');
+        return;
+    }
+    
+    fetch(`/admin-dashboard/reports/${currentReportId}/flag/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `reason=${encodeURIComponent(reason)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('warning', data.message);
+            bootstrap.Modal.getInstance(document.getElementById('flagModal')).hide();
+            location.reload();
+        } else {
+            showAlert('error', data.error || 'Failed to flag report');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while flagging the report');
+    });
+}
+
+// Bulk actions
+function toggleSelectAll() {
+    const selectAll = document.getElementById('selectAllCheckbox');
+    const checkboxes = document.querySelectorAll('.report-checkbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = selectAll.checked;
+    });
+    
+    updateBulkActionButtons();
+}
+
+function selectAll() {
+    const checkboxes = document.querySelectorAll('.report-checkbox');
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
+    selectAllCheckbox.checked = true;
+    
+    updateBulkActionButtons();
+}
+
+function updateBulkActionButtons() {
+    const checkedBoxes = document.querySelectorAll('.report-checkbox:checked');
+    const bulkApproveBtn = document.getElementById('bulkApproveBtn');
+    const bulkRejectBtn = document.getElementById('bulkRejectBtn');
+    
+    if (checkedBoxes.length > 0) {
+        bulkApproveBtn.disabled = false;
+        bulkRejectBtn.disabled = false;
+    } else {
+        bulkApproveBtn.disabled = true;
+        bulkRejectBtn.disabled = true;
+    }
+}
+
+function bulkAction(action) {
+    const checkedBoxes = document.querySelectorAll('.report-checkbox:checked');
+    const reportIds = Array.from(checkedBoxes).map(cb => cb.value);
+    
+    if (reportIds.length === 0) {
+        alert('Please select reports to perform bulk action.');
+        return;
+    }
+    
+    const actionText = action === 'approve' ? 'approve' : 'reject';
+    if (confirm(`Are you sure you want to ${actionText} ${reportIds.length} report(s)?`)) {
+        // Implement bulk action logic here
+        showAlert('info', `Bulk ${actionText} feature coming soon!`);
+    }
+}
+
+// Utility function for alerts
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    const container = document.querySelector('.col-12');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners to checkboxes
+    document.querySelectorAll('.report-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActionButtons);
+    });
+    
+    // Update bulk action buttons on page load
+    updateBulkActionButtons();
+});
+</script>
+{% endblock %}

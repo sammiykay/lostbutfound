@@ -1,0 +1,371 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page.title }} - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Page Header -->
+        <div class="text-center mb-5">
+            <h1 class="display-5">{{ page.title }}</h1>
+            {% if page.subtitle %}
+            <p class="lead text-muted">{{ page.subtitle }}</p>
+            {% endif %}
+        </div>
+        
+        <!-- Page Content -->
+        <div class="card">
+            <div class="card-body">
+                <!-- Page Meta Info -->
+                {% if page.show_meta %}
+                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                    <div class="text-muted small">
+                        {% if page.created_at %}
+                        <i class="bi bi-calendar3"></i> 
+                        Published: {{ page.created_at|date:"F d, Y" }}
+                        {% endif %}
+                        {% if page.updated_at and page.updated_at != page.created_at %}
+                        <span class="ms-3">
+                            <i class="bi bi-arrow-clockwise"></i> 
+                            Updated: {{ page.updated_at|date:"F d, Y" }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% if page.author %}
+                    <div class="text-muted small">
+                        <i class="bi bi-person"></i> {{ page.author.get_full_name|default:page.author.username }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <!-- Main Content -->
+                <div class="content-area">
+                    {{ page.content|safe }}
+                </div>
+                
+                <!-- Table of Contents (if page has sections) -->
+                {% if page.show_toc and page.sections %}
+                <div class="card mt-5 bg-light">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-list-ul me-2"></i>Table of Contents
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            {% for section in page.sections %}
+                            <li class="mb-2">
+                                <a href="#{{ section.slug }}" class="text-decoration-none">
+                                    {{ section.title }}
+                                </a>
+                                {% if section.subsections %}
+                                <ul class="mt-1">
+                                    {% for subsection in section.subsections %}
+                                    <li>
+                                        <a href="#{{ subsection.slug }}" class="text-decoration-none text-muted small">
+                                            {{ subsection.title }}
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Related Pages -->
+                {% if page.related_pages.exists %}
+                <div class="mt-5">
+                    <h5 class="mb-3">Related Information</h5>
+                    <div class="row">
+                        {% for related_page in page.related_pages.all %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">
+                                        <a href="{% url 'lost_found:static_page' related_page.slug %}" 
+                                           class="text-decoration-none">{{ related_page.title }}</a>
+                                    </h6>
+                                    {% if related_page.subtitle %}
+                                    <p class="card-text text-muted small">{{ related_page.subtitle }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Contact Info (if this is a contact-type page) -->
+                {% if page.slug == 'contact' %}
+                <div class="mt-5">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-envelope me-2"></i>Get in Touch
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-3">
+                                            <strong>Email:</strong>
+                                            <br><a href="mailto:support@lostandfound.edu">support@lostandfound.edu</a>
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong>Phone:</strong>
+                                            <br>(555) 123-4567
+                                        </li>
+                                        <li class="mb-3">
+                                            <strong>Office Hours:</strong>
+                                            <br>Monday - Friday: 8:00 AM - 5:00 PM
+                                            <br>Saturday: 9:00 AM - 1:00 PM
+                                        </li>
+                                        <li>
+                                            <strong>Location:</strong>
+                                            <br>Student Services Building, Room 102
+                                            <br>Main Campus
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">
+                                        <i class="bi bi-question-circle me-2"></i>Quick Help
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2">
+                                            <a href="{% url 'lost_found:faq' %}" class="text-decoration-none">
+                                                <i class="bi bi-arrow-right me-2"></i>Frequently Asked Questions
+                                            </a>
+                                        </li>
+                                        <li class="mb-2">
+                                            <a href="{% url 'lost_found:report_create' %}" class="text-decoration-none">
+                                                <i class="bi bi-arrow-right me-2"></i>Report a Lost/Found Item
+                                            </a>
+                                        </li>
+                                        <li class="mb-2">
+                                            <a href="{% url 'lost_found:report_list' %}" class="text-decoration-none">
+                                                <i class="bi bi-arrow-right me-2"></i>Browse Available Items
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="{% url 'lost_found:dashboard' %}" class="text-decoration-none">
+                                                <i class="bi bi-arrow-right me-2"></i>My Dashboard
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Back to Top Button -->
+        {% if page.content|length > 1000 %}
+        <div class="text-center mt-4">
+            <button id="backToTop" class="btn btn-outline-secondary btn-sm" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+                <i class="bi bi-arrow-up"></i> Back to Top
+            </button>
+        </div>
+        {% endif %}
+        
+        <!-- Footer Navigation -->
+        <div class="d-flex justify-content-between align-items-center mt-5 pt-4 border-top">
+            <a href="{% url 'lost_found:home' %}" class="btn btn-outline-primary">
+                <i class="bi bi-house"></i> Home
+            </a>
+            
+            <div class="text-muted small">
+                {% if page.version %}Version {{ page.version }} • {% endif %}
+                Last updated {{ page.updated_at|date:"M d, Y" }}
+            </div>
+            
+            <div>
+                {% if page.slug == 'about' %}
+                <a href="#" onclick="window.print()" class="btn btn-outline-secondary me-2">
+                    <i class="bi bi-printer"></i> Print
+                </a>
+                {% endif %}
+                <a href="{% url 'lost_found:faq' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-question-circle"></i> Help
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.content-area {
+    line-height: 1.6;
+}
+
+.content-area h1,
+.content-area h2,
+.content-area h3,
+.content-area h4,
+.content-area h5,
+.content-area h6 {
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.content-area h1:first-child,
+.content-area h2:first-child,
+.content-area h3:first-child {
+    margin-top: 0;
+}
+
+.content-area p {
+    margin-bottom: 1rem;
+}
+
+.content-area ul,
+.content-area ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+}
+
+.content-area li {
+    margin-bottom: 0.5rem;
+}
+
+.content-area blockquote {
+    padding: 1rem;
+    margin: 1.5rem 0;
+    border-left: 4px solid var(--bs-primary);
+    background-color: var(--bs-light);
+    border-radius: 0.375rem;
+}
+
+.content-area code {
+    background-color: var(--bs-gray-100);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+}
+
+.content-area pre {
+    background-color: var(--bs-gray-100);
+    padding: 1rem;
+    border-radius: 0.375rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+}
+
+.content-area table {
+    width: 100%;
+    margin: 1rem 0;
+    border-collapse: collapse;
+}
+
+.content-area table th,
+.content-area table td {
+    padding: 0.75rem;
+    border: 1px solid var(--bs-border-color);
+    text-align: left;
+}
+
+.content-area table th {
+    background-color: var(--bs-light);
+    font-weight: 600;
+}
+
+.content-area img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 0.375rem;
+    margin: 1rem 0;
+}
+
+@media print {
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .btn,
+    .border-top,
+    #backToTop {
+        display: none !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scrolling for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Show/hide back to top button
+    const backToTopBtn = document.getElementById('backToTop');
+    if (backToTopBtn) {
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopBtn.style.display = 'inline-block';
+            } else {
+                backToTopBtn.style.display = 'none';
+            }
+        });
+    }
+    
+    // Add copy link functionality to headings
+    document.querySelectorAll('.content-area h2, .content-area h3, .content-area h4').forEach(heading => {
+        if (heading.id) {
+            heading.style.cursor = 'pointer';
+            heading.title = 'Click to copy link to this section';
+            heading.addEventListener('click', function() {
+                const url = window.location.href.split('#')[0] + '#' + this.id;
+                navigator.clipboard.writeText(url).then(() => {
+                    // Show temporary feedback
+                    const originalText = this.textContent;
+                    this.textContent = originalText + ' 📋 Copied!';
+                    setTimeout(() => {
+                        this.textContent = originalText;
+                    }, 2000);
+                }).catch(() => {
+                    // Fallback for older browsers
+                    const textArea = document.createElement('textarea');
+                    textArea.value = url;
+                    document.body.appendChild(textArea);
+                    textArea.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(textArea);
+                });
+            });
+        }
+    });
+});
+</script>
+{% endblock %}

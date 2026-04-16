@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Profile - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>Edit Profile</h1>
+            <a href="{% url 'lost_found:profile' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Profile
+            </a>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-gear me-2"></i>Personal Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- User Basic Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="id_first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="id_first_name" 
+                                   name="first_name" value="{{ user.first_name }}" 
+                                   placeholder="Enter your first name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="id_last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="id_last_name" 
+                                   name="last_name" value="{{ user.last_name }}" 
+                                   placeholder="Enter your last name">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="id_email" 
+                               name="email" value="{{ user.email }}" 
+                               placeholder="Enter your email address">
+                        <div class="form-text">
+                            We'll use this to notify you about claims and updates on your reports.
+                        </div>
+                    </div>
+                    
+                    <hr class="mb-4">
+                    
+                    <!-- Profile Extended Info -->
+                    <h6 class="mb-3">Additional Information</h6>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="{{ form.phone_number.id_for_label }}" 
+                                   name="{{ form.phone_number.name }}" value="{{ form.phone_number.value|default:'' }}" 
+                                   placeholder="Enter your phone number">
+                            {% if form.phone_number.errors %}
+                                <div class="text-danger small mt-1">{{ form.phone_number.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Optional. Used for direct contact about claims.
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="{{ form.campus_location.id_for_label }}" class="form-label">Campus Location</label>
+                            <select class="form-select" id="{{ form.campus_location.id_for_label }}" 
+                                    name="{{ form.campus_location.name }}">
+                                <option value="">Select your primary location</option>
+                                <option value="Main Campus" {% if form.campus_location.value == 'Main Campus' %}selected{% endif %}>Main Campus</option>
+                                <option value="North Campus" {% if form.campus_location.value == 'North Campus' %}selected{% endif %}>North Campus</option>
+                                <option value="South Campus" {% if form.campus_location.value == 'South Campus' %}selected{% endif %}>South Campus</option>
+                                <option value="Engineering Building" {% if form.campus_location.value == 'Engineering Building' %}selected{% endif %}>Engineering Building</option>
+                                <option value="Science Building" {% if form.campus_location.value == 'Science Building' %}selected{% endif %}>Science Building</option>
+                                <option value="Library" {% if form.campus_location.value == 'Library' %}selected{% endif %}>Library</option>
+                                <option value="Student Union" {% if form.campus_location.value == 'Student Union' %}selected{% endif %}>Student Union</option>
+                                <option value="Administration" {% if form.campus_location.value == 'Administration' %}selected{% endif %}>Administration</option>
+                            </select>
+                            {% if form.campus_location.errors %}
+                                <div class="text-danger small mt-1">{{ form.campus_location.errors.0 }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Helps others know where to find you for item returns.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.bio.id_for_label }}" class="form-label">Bio</label>
+                        <textarea class="form-control" id="{{ form.bio.id_for_label }}" 
+                                  name="{{ form.bio.name }}" rows="4" 
+                                  placeholder="Tell us a bit about yourself (optional)">{{ form.bio.value|default:'' }}</textarea>
+                        {% if form.bio.errors %}
+                            <div class="text-danger small mt-1">{{ form.bio.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            Optional. A brief description that will be visible to other users.
+                        </div>
+                    </div>
+                    
+                    <!-- Profile Avatar -->
+                    <div class="mb-4">
+                        <label for="{{ form.avatar.id_for_label }}" class="form-label">Profile Picture</label>
+                        {% if form.instance.avatar %}
+                        <div class="mb-3">
+                            <img src="{{ form.instance.avatar.url }}" class="rounded-circle" 
+                                 style="width: 80px; height: 80px; object-fit: cover;" alt="Current avatar">
+                            <div class="form-text">Current profile picture</div>
+                        </div>
+                        {% endif %}
+                        <input type="file" class="form-control" id="{{ form.avatar.id_for_label }}" 
+                               name="{{ form.avatar.name }}" accept="image/*">
+                        {% if form.avatar.errors %}
+                            <div class="text-danger small mt-1">{{ form.avatar.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            Optional. Upload a profile picture (JPG, PNG, max 5MB).
+                        </div>
+                    </div>
+                    
+                    <!-- Notification Preferences -->
+                    <hr class="mb-4">
+                    <h6 class="mb-3">Notification Preferences</h6>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="{{ form.email_notifications.id_for_label }}" 
+                                   name="{{ form.email_notifications.name }}" 
+                                   {% if form.email_notifications.value %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ form.email_notifications.id_for_label }}">
+                                Email notifications for claims and updates
+                            </label>
+                        </div>
+                        {% if form.email_notifications.errors %}
+                            <div class="text-danger small mt-1">{{ form.email_notifications.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="{{ form.public_profile.id_for_label }}" 
+                                   name="{{ form.public_profile.name }}" 
+                                   {% if form.public_profile.value %}checked{% endif %}>
+                            <label class="form-check-label" for="{{ form.public_profile.id_for_label }}">
+                                Make my profile visible to other users
+                            </label>
+                        </div>
+                        {% if form.public_profile.errors %}
+                            <div class="text-danger small mt-1">{{ form.public_profile.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            When enabled, other users can see your profile information when viewing your reports.
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'lost_found:profile' %}" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Account Security -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-shield-check me-2"></i>Account Security
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Password</h6>
+                        <p class="text-muted">Keep your account secure with a strong password.</p>
+                        <a href="{% url 'password_change' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-key"></i> Change Password
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Account Status</h6>
+                        <p class="text-muted">
+                            <span class="badge bg-success">Active</span>
+                            Member since {{ user.date_joined|date:"F Y" }}
+                        </p>
+                        {% if user.is_staff %}
+                        <span class="badge bg-primary">Staff Member</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Preview uploaded avatar
+    const avatarInput = document.getElementById('{{ form.avatar.id_for_label }}');
+    if (avatarInput) {
+        avatarInput.addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    // Create or update preview image
+                    let preview = document.getElementById('avatar-preview');
+                    if (!preview) {
+                        preview = document.createElement('img');
+                        preview.id = 'avatar-preview';
+                        preview.className = 'rounded-circle mt-2';
+                        preview.style.cssText = 'width: 80px; height: 80px; object-fit: cover;';
+                        avatarInput.parentNode.insertBefore(preview, avatarInput.nextSibling);
+                    }
+                    preview.src = e.target.result;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+    }
+    
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const email = document.getElementById('id_email').value.trim();
+        if (email && !email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+            alert('Please enter a valid email address.');
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

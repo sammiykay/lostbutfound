@@ -1,0 +1,177 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-speedometer2 me-2"></i>Admin Dashboard</h1>
+            <div>
+                <a href="{% url 'lost_found:admin_report_list' %}" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-list"></i> Manage Reports
+                </a>
+                <a href="{% url 'lost_found:analytics' %}" class="btn btn-outline-info">
+                    <i class="bi bi-graph-up"></i> Analytics
+                </a>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center border-primary">
+                    <div class="card-body">
+                        <i class="bi bi-file-earmark-text display-4 text-primary mb-2"></i>
+                        <h4 class="text-primary mb-0">{{ total_reports|default:0 }}</h4>
+                        <small class="text-muted">Total Reports</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center border-warning">
+                    <div class="card-body">
+                        <i class="bi bi-clock display-4 text-warning mb-2"></i>
+                        <h4 class="text-warning mb-0">{{ pending_reports|default:0 }}</h4>
+                        <small class="text-muted">Pending Approval</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center border-success">
+                    <div class="card-body">
+                        <i class="bi bi-check-circle display-4 text-success mb-2"></i>
+                        <h4 class="text-success mb-0">{{ resolved_reports|default:0 }}</h4>
+                        <small class="text-muted">Resolved</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center border-info">
+                    <div class="card-body">
+                        <i class="bi bi-people display-4 text-info mb-2"></i>
+                        <h4 class="text-info mb-0">{{ total_users|default:0 }}</h4>
+                        <small class="text-muted">Total Users</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <a href="{% url 'lost_found:admin_report_list' %}?status=pending" class="btn btn-warning w-100">
+                                    <i class="bi bi-clock"></i> Review Pending Reports 
+                                    <span class="badge bg-light text-dark ms-1">{{ pending_reports|default:0 }}</span>
+                                </a>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <button class="btn btn-info w-100" onclick="showRecentClaims()">
+                                    <i class="bi bi-hand-thumbs-up"></i> Review Recent Claims
+                                </button>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <button class="btn btn-secondary w-100" onclick="exportData()">
+                                    <i class="bi bi-download"></i> Export Data
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Additional Admin Actions -->
+                        <hr class="my-4">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <a href="{% url 'lost_found:admin_report_list' %}?status=flagged" class="btn btn-outline-warning w-100">
+                                    <i class="bi bi-flag"></i> Review Flagged Reports
+                                    {% if flagged_count > 0 %}
+                                    <span class="badge bg-warning text-dark ms-1">{{ flagged_count }}</span>
+                                    {% endif %}
+                                </a>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <a href="{% url 'lost_found:admin_report_list' %}" class="btn btn-outline-primary w-100">
+                                    <i class="bi bi-list"></i> View All Reports
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">Recent Reports</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <!-- Placeholder for recent reports -->
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between">
+                                    <span>Sample Report Title</span>
+                                    <small class="text-muted">2 hours ago</small>
+                                </div>
+                                <small class="text-muted">Status: Pending</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">System Status</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>System Health</span>
+                                <span class="badge bg-success">Good</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Database Status</span>
+                                <span class="badge bg-success">Online</span>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Active Users</span>
+                                <span class="badge bg-info">{{ active_users|default:0 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showPendingReports() {
+    window.location.href = '{% url "lost_found:admin_report_list" %}?status=pending';
+}
+
+function showRecentClaims() {
+    alert('Claims management feature coming soon!');
+}
+
+function exportData() {
+    alert('Data export feature coming soon!');
+}
+</script>
+{% endblock %}

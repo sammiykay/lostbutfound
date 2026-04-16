@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Login - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3>Login</h3>
+                <p class="text-muted">Access your Lost & Found account</p>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.username.id_for_label }}" class="form-label">Email or Username</label>
+                        <input type="text" class="form-control" name="{{ form.username.name }}" 
+                               id="{{ form.username.id_for_label }}" 
+                               {% if form.username.value %}value="{{ form.username.value }}"{% endif %} required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
+                        <input type="password" class="form-control" name="{{ form.password.name }}" 
+                               id="{{ form.password.id_for_label }}" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                    </div>
+                </form>
+                
+                <hr>
+                
+                <div class="text-center">
+                    <p class="mb-2">
+                        <a href="{% url 'password_reset' %}" class="text-decoration-none">
+                            Forgot your password?
+                        </a>
+                    </p>
+                    <p class="mb-0">
+                        Don't have an account? 
+                        <a href="{% url 'lost_found:register' %}" class="text-decoration-none">
+                            Register here
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Demo Accounts Info -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6>Demo Accounts</h6>
+            </div>
+            <div class="card-body">
+                <small class="text-muted">For testing purposes, you can use these demo accounts:</small>
+                <ul class="list-unstyled mt-2">
+                    <li><strong>Admin:</strong> admin@example.com / Admin123!</li>
+                    <li><strong>Student:</strong> user1@example.com / User123!</li>
+                    <li><strong>Staff:</strong> user2@example.com / User123!</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

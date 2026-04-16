@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Claim Item - {{ report.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- Item Details -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h4>Item You're Claiming</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex gap-2 mb-3">
+                            <span class="badge {% if report.type == 'LOST' %}bg-danger{% else %}bg-success{% endif %}">
+                                {{ report.get_type_display }}
+                            </span>
+                            <span class="badge {% if report.status == 'OPEN' %}bg-primary{% elif report.status == 'CLAIMED' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ report.get_status_display }}
+                            </span>
+                        </div>
+                        
+                        <h5>{{ report.title }}</h5>
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-geo-alt"></i> {{ report.location_text }}
+                        </p>
+                        <p class="text-muted mb-2">
+                            <i class="bi bi-calendar"></i> {{ report.date_event|date:"F d, Y" }}
+                        </p>
+                        <p>{{ report.description|truncatewords:30 }}</p>
+                    </div>
+                    {% if report.photos.exists %}
+                    <div class="col-md-4">
+                        <img src="{{ report.photos.first.image.url }}" 
+                             class="img-fluid rounded" 
+                             style="max-height: 200px; object-fit: cover;" 
+                             alt="{{ report.title }}">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Claim Form -->
+        <div class="card">
+            <div class="card-header">
+                <h4><i class="bi bi-hand-thumbs-up"></i> Submit Your Claim</h4>
+                <p class="text-muted mb-0">Please provide detailed information to prove this item belongs to you</p>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Important:</strong> Only claim this item if it truly belongs to you. 
+                    Provide specific details that prove ownership. False claims may result in account suspension.
+                </div>
+                
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.message.id_for_label }}" class="form-label">
+                            Why is this your item? <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" name="{{ form.message.name }}" 
+                                  id="{{ form.message.id_for_label }}" rows="6" 
+                                  placeholder="Describe specific details that prove this item belongs to you. Include information only the real owner would know (serial numbers, contents, unique marks, etc.)" 
+                                  required>{{ form.message.value|default:'' }}</textarea>
+                        {% if form.message.errors %}
+                            <div class="text-danger small mt-1">{{ form.message.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            Be as specific as possible. Include details like serial numbers, unique identifiers, 
+                            contents, distinguishing marks, or anything that proves ownership.
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.evidence_photo.id_for_label }}" class="form-label">
+                            Evidence Photo (Optional)
+                        </label>
+                        <input type="file" class="form-control" name="{{ form.evidence_photo.name }}" 
+                               id="{{ form.evidence_photo.id_for_label }}" accept="image/*">
+                        {% if form.evidence_photo.errors %}
+                            <div class="text-danger small mt-1">{{ form.evidence_photo.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">
+                            Upload a photo that helps prove ownership (receipt, similar item you own, ID with the item, etc.)
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>What happens next?</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>The item owner will review your claim</li>
+                            <li>They may contact you for additional verification</li>
+                            <li>You'll receive a notification when they make a decision</li>
+                            <li>If approved, you can arrange to collect your item</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center">
+                        <a href="{% url 'lost_found:report_detail' report.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Back to Item
+                        </a>
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="bi bi-check-circle"></i> Submit Claim
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character counter for message field
+    const messageField = document.getElementById('{{ form.message.id_for_label }}');
+    if (messageField) {
+        const counter = document.createElement('div');
+        counter.className = 'form-text text-end';
+        counter.style.fontSize = '0.875rem';
+        messageField.parentNode.appendChild(counter);
+        
+        function updateCounter() {
+            const count = messageField.value.length;
+            counter.textContent = `${count} characters`;
+            counter.style.color = count < 50 ? '#dc3545' : count < 100 ? '#fd7e14' : '#198754';
+        }
+        
+        messageField.addEventListener('input', updateCounter);
+        updateCounter();
+    }
+    
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const message = messageField.value.trim();
+        if (message.length < 50) {
+            alert('Please provide more detail in your claim message (at least 50 characters). This helps the owner verify that the item truly belongs to you.');
+            e.preventDefault();
+            messageField.focus();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

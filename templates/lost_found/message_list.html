@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}My Messages - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-chat-dots me-2"></i>My Messages</h1>
+            <a href="{% url 'lost_found:dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+        
+        {% if messages %}
+        <div class="row">
+            {% for thread in messages %}
+            <div class="col-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h5 class="mb-2">
+                                    <a href="{% url 'lost_found:message_detail' thread.pk %}" 
+                                       class="text-decoration-none">{{ thread.subject|default:"Message Thread" }}</a>
+                                </h5>
+                                <p class="text-muted mb-2">
+                                    <i class="bi bi-person"></i> 
+                                    {% if thread.participants.count > 1 %}
+                                        {{ thread.participants.count }} participants
+                                    {% else %}
+                                        {{ thread.participants.first.get_full_name|default:thread.participants.first.username }}
+                                    {% endif %}
+                                </p>
+                                <p class="mb-2">{{ thread.last_message.content|truncatewords:20|default:"No messages yet" }}</p>
+                                <small class="text-muted">
+                                    <i class="bi bi-clock"></i> {{ thread.updated_at|timesince }} ago
+                                </small>
+                            </div>
+                            <div class="flex-shrink-0 ms-3">
+                                {% if thread.unread_count > 0 %}
+                                <span class="badge bg-primary rounded-pill">{{ thread.unread_count }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <nav aria-label="Messages pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        
+        {% else %}
+        <!-- No Messages -->
+        <div class="row justify-content-center">
+            <div class="col-lg-6">
+                <div class="card text-center">
+                    <div class="card-body py-5">
+                        <i class="bi bi-chat-dots display-4 text-muted mb-4"></i>
+                        <h3>No Messages Yet</h3>
+                        <p class="text-muted mb-4">
+                            You don't have any messages yet. Messages will appear here when someone contacts you about your reports or claims.
+                        </p>
+                        <div class="d-grid gap-2 d-md-block">
+                            <a href="{% url 'lost_found:report_list' %}" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Browse Items
+                            </a>
+                            <a href="{% url 'lost_found:report_create' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle"></i> Report an Item
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh messages every 30 seconds
+setInterval(function() {
+    // In a real implementation, this would check for new messages
+    // For now, we'll just update the unread indicators
+    const badges = document.querySelectorAll('.badge.bg-primary');
+    badges.forEach(badge => {
+        // This would be replaced with actual AJAX calls
+        console.log('Checking for new messages...');
+    });
+}, 30000);
+</script>
+{% endblock %}

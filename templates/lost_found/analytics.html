@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Analytics - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-graph-up me-2"></i>Analytics</h1>
+            <a href="{% url 'lost_found:admin_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+        
+        <!-- Key Metrics -->
+        <div class="row mb-4">
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h2 class="text-primary">{{ total_reports|default:0 }}</h2>
+                        <p class="text-muted mb-0">Total Reports</p>
+                        <small class="text-success">+12% from last month</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h2 class="text-success">{{ success_rate|default:0 }}%</h2>
+                        <p class="text-muted mb-0">Success Rate</p>
+                        <small class="text-success">+5% from last month</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h2 class="text-info">{{ avg_resolution_time|default:0 }}</h2>
+                        <p class="text-muted mb-0">Avg Resolution (days)</p>
+                        <small class="text-danger">+2 days from last month</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="card text-center">
+                    <div class="card-body">
+                        <h2 class="text-warning">{{ active_users|default:0 }}</h2>
+                        <p class="text-muted mb-0">Active Users</p>
+                        <small class="text-success">+8% from last month</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Placeholder -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Reports Over Time</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-graph-up display-4"></i>
+                            <p>Chart implementation would go here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Category Breakdown</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="text-center text-muted py-5">
+                            <i class="bi bi-pie-chart display-4"></i>
+                            <p>Pie chart would go here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Data Tables -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Top Categories</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Electronics</span>
+                                <span class="badge bg-primary">45</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Personal Items</span>
+                                <span class="badge bg-primary">32</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Clothing</span>
+                                <span class="badge bg-primary">28</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Top Locations</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Library</span>
+                                <span class="badge bg-info">38</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Student Union</span>
+                                <span class="badge bg-info">25</span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between">
+                                <span>Cafeteria</span>
+                                <span class="badge bg-info">19</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

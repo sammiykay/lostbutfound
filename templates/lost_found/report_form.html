@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Report Item - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="bi bi-plus-circle"></i> Report an Item</h3>
+                <p class="text-muted mb-0">Help us reunite lost items with their owners</p>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="reportForm">
+                    {% csrf_token %}
+                    
+                    <!-- Item Status - Prominent at top -->
+                    <div class="mb-4">
+                        <div class="card bg-light">
+                            <div class="card-body text-center py-3">
+                                <label class="form-label fw-bold mb-3">What happened? <span class="text-danger">*</span></label>
+                                <div class="d-flex justify-content-center gap-4">
+                                    {% for choice in form.type.field.choices %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="{{ form.type.name }}" 
+                                                   id="id_type_{{ forloop.counter0 }}" value="{{ choice.0 }}"
+                                                   {% if form.type.value == choice.0 %}checked{% endif %} required>
+                                            <label class="form-check-label btn btn-outline-{% if choice.0 == 'LOST' %}danger{% else %}success{% endif %} px-4 py-2" 
+                                                   for="id_type_{{ forloop.counter0 }}" style="cursor: pointer;">
+                                                <i class="bi bi-{% if choice.0 == 'LOST' %}exclamation-circle{% else %}check-circle{% endif %} me-2"></i>
+                                                {% if choice.0 == 'LOST' %}
+                                                    I LOST this item
+                                                {% elif choice.0 == 'FOUND' %}
+                                                    I FOUND this item
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                {% if form.type.errors %}
+                                    <div class="text-danger small mt-2">{{ form.type.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">Category <span class="text-danger">*</span></label>
+                                <select name="{{ form.category.name }}" class="form-select" id="{{ form.category.id_for_label }}" required>
+                                    <option value="">Select a category</option>
+                                    {% for choice in form.category.field.queryset %}
+                                        <option value="{{ choice.pk }}" {% if form.category.value == choice.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ choice.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.category.errors %}
+                                    <div class="text-danger small">{{ form.category.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" name="{{ form.title.name }}" 
+                               id="{{ form.title.id_for_label }}" value="{{ form.title.value|default:'' }}" 
+                               placeholder="Brief description (e.g., Black iPhone 13 Pro Max)" required>
+                        <div class="form-text">Provide a clear, concise title (10-120 characters)</div>
+                        {% if form.title.errors %}
+                            <div class="text-danger small">{{ form.title.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="{{ form.description.name }}" 
+                                  id="{{ form.description.id_for_label }}" rows="5" 
+                                  placeholder="Provide detailed description including brand, model, color, distinctive features, etc." 
+                                  required>{{ form.description.value|default:'' }}</textarea>
+                        <div class="form-text">Be as specific as possible to help with identification</div>
+                        {% if form.description.errors %}
+                            <div class="text-danger small">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="{{ form.location_text.id_for_label }}" class="form-label">Location <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="{{ form.location_text.name }}" 
+                                       id="{{ form.location_text.id_for_label }}" value="{{ form.location_text.value|default:'' }}" 
+                                       placeholder="Where did you lose/find this item? (e.g., Main Library - 2nd Floor)" required>
+                                <div class="form-text">
+                                    <button type="button" class="btn btn-link p-0" id="useCurrentLocation">
+                                        <i class="bi bi-geo-alt"></i> Use current location
+                                    </button>
+                                </div>
+                                {% if form.location_text.errors %}
+                                    <div class="text-danger small">{{ form.location_text.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.date_event.id_for_label }}" class="form-label">Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="{{ form.date_event.name }}" 
+                                       id="{{ form.date_event.id_for_label }}" value="{{ form.date_event.value|default:'' }}" required>
+                                {% if form.date_event.errors %}
+                                    <div class="text-danger small">{{ form.date_event.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.reward_offered.id_for_label }}" class="form-label">Reward Offered (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" name="{{ form.reward_offered.name }}" 
+                                   id="{{ form.reward_offered.id_for_label }}" value="{{ form.reward_offered.value|default:'' }}" 
+                                   step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <div class="form-text">Optional reward amount for the return of this item</div>
+                        {% if form.reward_offered.errors %}
+                            <div class="text-danger small">{{ form.reward_offered.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Photos (Optional)</label>
+                        <div class="border rounded p-3" id="photoDropZone">
+                            <div class="text-center">
+                                <i class="bi bi-camera text-muted" style="font-size: 2rem;"></i>
+                                <p class="mb-2">Drag and drop photos here or click to browse</p>
+                                <input type="file" class="form-control" id="photoUpload" name="photos" 
+                                       accept="image/*" multiple style="display: none;">
+                                <button type="button" class="btn btn-outline-primary btn-sm" onclick="document.getElementById('photoUpload').click();">
+                                    Choose Photos
+                                </button>
+                            </div>
+                            <div id="photoPreview" class="mt-3"></div>
+                        </div>
+                        <div class="form-text">Add up to 5 photos to help identify the item</div>
+                    </div>
+                    
+                    <!-- Hidden fields for coordinates -->
+                    <input type="hidden" name="{{ form.latitude.name }}" id="{{ form.latitude.id_for_label }}" value="{{ form.latitude.value|default:'' }}">
+                    <input type="hidden" name="{{ form.longitude.name }}" id="{{ form.longitude.id_for_label }}" value="{{ form.longitude.value|default:'' }}">
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Please note:</strong> Your report will be reviewed by administrators before it appears publicly. 
+                        Make sure all information is accurate and complete.
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'lost_found:report_list' %}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Submit Report
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Item type radio button styling
+    const typeRadios = document.querySelectorAll('input[name="{{ form.type.name }}"]');
+    typeRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Remove active state from all labels
+            typeRadios.forEach(r => {
+                const label = r.nextElementSibling;
+                label.classList.remove('btn-danger', 'btn-success');
+                label.classList.add('btn-outline-' + (r.value === 'LOST' ? 'danger' : 'success'));
+            });
+            
+            // Add active state to selected label
+            const label = this.nextElementSibling;
+            label.classList.remove('btn-outline-danger', 'btn-outline-success');
+            label.classList.add('btn-' + (this.value === 'LOST' ? 'danger' : 'success'));
+        });
+    });
+    
+    // Location picker functionality
+    document.getElementById('useCurrentLocation').addEventListener('click', function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                document.getElementById('{{ form.latitude.id_for_label }}').value = position.coords.latitude;
+                document.getElementById('{{ form.longitude.id_for_label }}').value = position.coords.longitude;
+                
+                // Reverse geocoding would go here in a real implementation
+                document.getElementById('{{ form.location_text.id_for_label }}').value = 
+                    `Coordinates: ${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+                
+                alert('Location captured! You can edit the location description above.');
+            }, function(error) {
+                alert('Unable to get your location. Please enter the location manually.');
+            });
+        } else {
+            alert('Geolocation is not supported by this browser.');
+        }
+    });
+    
+    // Photo upload preview functionality
+    const photoUpload = document.getElementById('photoUpload');
+    const photoPreview = document.getElementById('photoPreview');
+    const dropZone = document.getElementById('photoDropZone');
+    
+    photoUpload.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+    
+    // Drag and drop functionality
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.add('border-primary');
+    });
+    
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('border-primary');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.classList.remove('border-primary');
+        
+        const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'));
+        handleFiles(files);
+    });
+    
+    function handleFiles(files) {
+        if (files.length > 5) {
+            alert('You can only upload up to 5 photos.');
+            return;
+        }
+        
+        photoPreview.innerHTML = '';
+        
+        Array.from(files).forEach(function(file, index) {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const photoDiv = document.createElement('div');
+                    photoDiv.className = 'd-inline-block me-2 mb-2';
+                    photoDiv.innerHTML = `
+                        <div class="position-relative">
+                            <img src="${e.target.result}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: cover;">
+                            <button type="button" class="btn-close position-absolute top-0 end-0" 
+                                    style="font-size: 0.7rem; padding: 0.2rem;" 
+                                    onclick="this.parentElement.parentElement.remove();"></button>
+                        </div>
+                    `;
+                    photoPreview.appendChild(photoDiv);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Form validation
+    document.getElementById('reportForm').addEventListener('submit', function(e) {
+        const title = document.getElementById('{{ form.title.id_for_label }}').value.trim();
+        const description = document.getElementById('{{ form.description.id_for_label }}').value.trim();
+        
+        if (title.length < 10) {
+            alert('Title must be at least 10 characters long.');
+            e.preventDefault();
+            return false;
+        }
+        
+        if (description.length < 20) {
+            alert('Description must be at least 20 characters long.');
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

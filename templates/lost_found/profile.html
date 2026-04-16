@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>My Profile</h1>
+            <a href="{% url 'lost_found:profile_edit' %}" class="btn btn-primary">
+                <i class="bi bi-pencil"></i> Edit Profile
+            </a>
+        </div>
+        
+        <!-- Profile Info Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-circle me-2"></i>Personal Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Username</label>
+                            <p class="fw-bold">{{ user.username }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Email</label>
+                            <p class="fw-bold">{{ user.email|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">First Name</label>
+                            <p class="fw-bold">{{ user.first_name|default:"Not provided" }}</p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Last Name</label>
+                            <p class="fw-bold">{{ user.last_name|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if user.userprofile %}
+                <hr>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Phone Number</label>
+                            <p class="fw-bold">{{ user.userprofile.phone_number|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Campus Location</label>
+                            <p class="fw-bold">{{ user.userprofile.campus_location|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if user.userprofile.bio %}
+                <div class="mb-3">
+                    <label class="form-label text-muted">Bio</label>
+                    <p class="fw-bold">{{ user.userprofile.bio }}</p>
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Account Statistics -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-bar-chart me-2"></i>Account Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-0">{{ user.reports.count }}</h4>
+                            <small class="text-muted">Reports Submitted</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-success mb-0">{{ user.reports.filter.status='RETURNED'|length }}</h4>
+                            <small class="text-muted">Items Returned</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="border-end">
+                            <h4 class="text-info mb-0">{{ user.claims.count }}</h4>
+                            <small class="text-muted">Claims Made</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <h4 class="text-warning mb-0">{{ user.claims.filter.status='APPROVED'|length }}</h4>
+                        <small class="text-muted">Claims Approved</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Activity -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-activity me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if user.reports.exists %}
+                <h6 class="text-muted">Recent Reports</h6>
+                <div class="list-group mb-4">
+                    {% for report in user.reports.all|slice:":3" %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">{{ report.title }}</h6>
+                                <p class="mb-1 text-muted">{{ report.description|truncatewords:15 }}</p>
+                                <small class="text-muted">
+                                    <span class="badge {% if report.type == 'LOST' %}bg-danger{% else %}bg-success{% endif %} me-2">
+                                        {{ report.get_type_display }}
+                                    </span>
+                                    {{ report.created_at|date:"M d, Y" }}
+                                </small>
+                            </div>
+                            <div>
+                                <a href="{% url 'lost_found:report_detail' report.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if user.claims.exists %}
+                <h6 class="text-muted">Recent Claims</h6>
+                <div class="list-group">
+                    {% for claim in user.claims.all|slice:":3" %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">Claim for: {{ claim.report.title }}</h6>
+                                <p class="mb-1 text-muted">{{ claim.message|truncatewords:15 }}</p>
+                                <small class="text-muted">
+                                    <span class="badge 
+                                        {% if claim.status == 'PENDING' %}bg-warning
+                                        {% elif claim.status == 'APPROVED' %}bg-success
+                                        {% else %}bg-danger{% endif %} me-2">
+                                        {{ claim.get_status_display }}
+                                    </span>
+                                    {{ claim.created_at|date:"M d, Y" }}
+                                </small>
+                            </div>
+                            <div>
+                                <a href="{% url 'lost_found:claim_detail' claim.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if not user.reports.exists and not user.claims.exists %}
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-inbox display-4 d-block mb-3"></i>
+                    <p>No activity yet. Start by <a href="{% url 'lost_found:report_create' %}">reporting an item</a> or <a href="{% url 'lost_found:report_list' %}">browsing available items</a>.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

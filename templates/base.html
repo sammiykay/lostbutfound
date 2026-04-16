@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Lost and Found - University Lost & Found Portal{% endblock %}</title>
+    
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS (for compatibility) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    
+    <!-- Custom Modern CSS -->
+    {% load static %}
+    <link href="{% static 'lost_found/css/style.css' %}" rel="stylesheet">
+    
+    <meta name="description" content="Lost and Found - The modern lost and found portal for university students and staff. Report lost items, browse found items, and reconnect with your belongings.">
+    <meta name="theme-color" content="#0ea5e9">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Modern Navigation Bar -->
+    <nav class="navbar">
+        <div class="container">
+            <!-- Left: Brand -->
+            <a class="navbar-brand-compact" href="{% url 'lost_found:home' %}">
+                <div class="brand-icon-compact">
+                    <i class="bi bi-stars"></i>
+                </div>
+                <span class="brand-text-compact">Lost and Found</span>
+            </a>
+
+            <!-- Center: Main Navigation (Desktop) -->
+            <div class="nav-center d-none d-md-flex">
+                <div class="nav-links-compact">
+                    <a class="nav-link-simple" href="{% url 'lost_found:home' %}">Home</a>
+                    <a class="nav-link-simple" href="{% url 'lost_found:report_list' %}">Browse</a>
+                    <a class="nav-link-simple" href="{% url 'lost_found:faq' %}">Help</a>
+                </div>
+            </div>
+
+            <!-- Right: User Actions (Desktop) -->
+            <div class="nav-right d-none d-md-flex">
+                {% if user.is_authenticated %}
+                    <a class="btn btn-accent btn-sm" href="{% url 'lost_found:report_create' %}">
+                        <i class="bi bi-plus"></i> Report
+                    </a>
+                    
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <button class="btn btn-ghost btn-sm dropdown-toggle" type="button" id="notificationDropdown" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell"></i>
+                            <span class="badge badge-error" id="notificationBadge" style="display: none;">0</span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end notification-dropdown">
+                            <li><h6 class="dropdown-header">Notifications</h6></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li id="notificationList"><span class="dropdown-item text-muted">No new notifications</span></li>
+                        </ul>
+                    </div>
+                    
+                    <a class="btn btn-secondary btn-sm" href="{% url 'lost_found:dashboard' %}">
+                        Dashboard
+                    </a>
+                    {% if user.is_staff %}
+                        <a class="btn btn-secondary btn-sm" href="{% url 'lost_found:admin_dashboard' %}">
+                            <i class="bi bi-shield-check"></i> Admin
+                        </a>
+                    {% endif %}
+                    <a class="btn btn-ghost btn-sm" href="{% url 'logout' %}">
+                        Sign Out
+                    </a>
+                {% else %}
+                    <a class="btn btn-ghost btn-sm" href="{% url 'login' %}">Sign In</a>
+                    <a class="btn btn-primary btn-sm" href="{% url 'lost_found:register' %}">Sign Up</a>
+                {% endif %}
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button class="mobile-menu-btn d-md-none" type="button" data-bs-toggle="collapse" data-bs-target="#mobileNav">
+                <i class="bi bi-list"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class="collapse d-md-none" id="mobileNav">
+            <div class="mobile-nav">
+                <div class="mobile-nav-links">
+                    <a class="nav-link-simple" href="{% url 'lost_found:home' %}">Home</a>
+                    <a class="nav-link-simple" href="{% url 'lost_found:report_list' %}">Browse</a>
+                    <a class="nav-link-simple" href="{% url 'lost_found:faq' %}">Help</a>
+                </div>
+                <hr>
+                {% if user.is_authenticated %}
+                    <div class="mobile-nav-actions">
+                        <a class="btn btn-accent btn-sm" href="{% url 'lost_found:report_create' %}">Report Item</a>
+                        <a class="nav-link-simple" href="{% url 'lost_found:dashboard' %}">Dashboard</a>
+                        <a class="nav-link-simple" href="{% url 'lost_found:message_list' %}">
+                            <i class="bi bi-bell"></i> Notifications
+                        </a>
+                        {% if user.is_staff %}
+                            <a class="nav-link-simple" href="{% url 'lost_found:admin_dashboard' %}">
+                                <i class="bi bi-shield-check"></i> Admin Panel
+                            </a>
+                        {% endif %}
+                        <a class="nav-link-simple" href="{% url 'logout' %}">Sign Out</a>
+                    </div>
+                {% else %}
+                    <div class="mobile-nav-actions">
+                        <a class="btn btn-primary btn-sm" href="{% url 'lost_found:register' %}">Sign Up</a>
+                        <a class="nav-link-simple" href="{% url 'login' %}">Sign In</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Area -->
+    <main class="section">
+        <div class="container">
+            <!-- Flash Messages -->
+            {% if messages %}
+                <div class="grid gap-4" style="margin-bottom: 2rem;">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <div class="flex items-center gap-2">
+                                {% if message.tags == 'success' %}
+                                    <i class="bi bi-check-circle-fill"></i>
+                                {% elif message.tags == 'error' or message.tags == 'danger' %}
+                                    <i class="bi bi-exclamation-triangle-fill"></i>
+                                {% elif message.tags == 'warning' %}
+                                    <i class="bi bi-exclamation-circle-fill"></i>
+                                {% else %}
+                                    <i class="bi bi-info-circle-fill"></i>
+                                {% endif %}
+                                <div>{{ message }}</div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Simple Footer -->
+    <footer class="simple-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <span>&copy; {{ "now"|date:"Y" }} Lost and Found - University Lost & Found Portal</span>
+                </div>
+                <div class="footer-right">
+                    <a href="{% url 'lost_found:faq' %}">Help</a>
+                    <a href="mailto:support@university.edu">Contact</a>
+                    <span class="text-muted">Powered by Django</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay (for future AJAX operations) -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center" style="display: none; z-index: 9999;">
+        <div class="bg-white rounded-lg p-6 flex items-center gap-4">
+            <div class="animate-pulse" style="width: 40px; height: 40px; background: var(--primary-500); border-radius: 50%;"></div>
+            <span class="font-medium">Processing...</span>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'lost_found/js/app.js' %}"></script>
+    
+    <!-- Enhanced JavaScript for Modern UI -->
+    <script>
+        // Initialize modern UI features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add active states to navigation
+            const currentPath = window.location.pathname;
+            document.querySelectorAll('.nav-link-simple').forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                }
+            });
+            
+            // Enhance dropdowns with better animations
+            document.querySelectorAll('.dropdown').forEach(dropdown => {
+                dropdown.addEventListener('shown.bs.dropdown', function () {
+                    this.querySelector('.dropdown-menu').style.animation = 'slideIn 0.2s ease-out';
+                });
+            });
+            
+            // Auto-hide alerts after 5 seconds
+            document.querySelectorAll('.alert').forEach(alert => {
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                }, 5000);
+            });
+            
+            // Initialize loading states
+            window.showLoading = function() {
+                document.getElementById('loadingOverlay').style.display = 'flex';
+            };
+            
+            window.hideLoading = function() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            };
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

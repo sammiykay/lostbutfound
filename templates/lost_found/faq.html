@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}FAQ - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="text-center mb-5">
+            <h2>Frequently Asked Questions</h2>
+            <p class="lead text-muted">Find answers to common questions about the Lost & Found Portal</p>
+        </div>
+
+        {% if faqs %}
+            <div class="accordion" id="faqAccordion">
+                {% for faq in faqs %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                    type="button" data-bs-toggle="collapse" 
+                                    data-bs-target="#collapse{{ forloop.counter }}" 
+                                    aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                                    aria-controls="collapse{{ forloop.counter }}">
+                                {{ faq.question }}
+                            </button>
+                        </h2>
+                        <div id="collapse{{ forloop.counter }}" 
+                             class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                             aria-labelledby="heading{{ forloop.counter }}" 
+                             data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                {{ faq.answer|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="bi bi-question-circle text-muted" style="font-size: 5rem;"></i>
+                <h3>No FAQs Available</h3>
+                <p class="text-muted">Check back later for frequently asked questions.</p>
+            </div>
+        {% endif %}
+
+        <!-- Additional Help -->
+        <div class="card mt-5">
+            <div class="card-header">
+                <h5>Still Need Help?</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-envelope"></i> Contact Support</h6>
+                        <p class="text-muted">
+                            For additional assistance, email us at: 
+                            <a href="mailto:lostfound@university.edu">lostfound@university.edu</a>
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-book"></i> User Guide</h6>
+                        <p class="text-muted">
+                            Check out our step-by-step guides:
+                            <br>
+                            <a href="{% url 'lost_found:about' %}">How to Use the Portal</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Tips -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Quick Tips for Success</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-camera text-primary"></i> Take Clear Photos</h6>
+                        <p class="small text-muted">
+                            Include multiple angles and any unique identifying features
+                        </p>
+
+                        <h6><i class="bi bi-geo-alt text-primary"></i> Be Specific About Location</h6>
+                        <p class="small text-muted">
+                            Include building names, room numbers, and nearby landmarks
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-clock text-primary"></i> Act Quickly</h6>
+                        <p class="small text-muted">
+                            Report items as soon as possible for the best chance of recovery
+                        </p>
+
+                        <h6><i class="bi bi-shield-check text-primary"></i> Verify Ownership</h6>
+                        <p class="small text-muted">
+                            Be prepared to provide proof of ownership when claiming items
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

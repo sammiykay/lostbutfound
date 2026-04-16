@@ -1,0 +1,548 @@
+{% extends 'base.html' %}
+
+{% block title %}Claim Details - {{ claim.report.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1><i class="bi bi-hand-thumbs-up me-2"></i>Claim Details</h1>
+                <p class="text-muted mb-0">Claim #{{ claim.pk }} for "{{ claim.report.title }}"</p>
+            </div>
+            <div>
+                <a href="{% url 'lost_found:claim_list' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Claims
+                </a>
+            </div>
+        </div>
+        
+        <!-- Claim Status Alert -->
+        <div class="alert 
+            {% if claim.status == 'PENDING' %}alert-warning
+            {% elif claim.status == 'APPROVED' %}alert-success
+            {% elif claim.status == 'COLLECTED' %}alert-info
+            {% else %}alert-danger{% endif %} d-flex align-items-center">
+            <div class="flex-shrink-0 me-3">
+                {% if claim.status == 'PENDING' %}
+                    <i class="bi bi-clock-history fs-4"></i>
+                {% elif claim.status == 'APPROVED' %}
+                    <i class="bi bi-check-circle-fill fs-4"></i>
+                {% elif claim.status == 'COLLECTED' %}
+                    <i class="bi bi-bag-check-fill fs-4"></i>
+                {% else %}
+                    <i class="bi bi-x-circle-fill fs-4"></i>
+                {% endif %}
+            </div>
+            <div class="flex-grow-1">
+                <h5 class="mb-1">
+                    {% if claim.status == 'PENDING' %}
+                        Claim Under Review
+                    {% elif claim.status == 'APPROVED' %}
+                        Claim Approved!
+                    {% elif claim.status == 'COLLECTED' %}
+                        Item Collected!
+                    {% else %}
+                        Claim Rejected
+                    {% endif %}
+                </h5>
+                <p class="mb-0">
+                    {% if claim.status == 'PENDING' %}
+                        The item owner is reviewing your claim. You'll receive a notification when they make a decision.
+                    {% elif claim.status == 'APPROVED' %}
+                        Congratulations! Your claim has been approved. Contact the item owner to arrange pickup.
+                    {% elif claim.status == 'COLLECTED' %}
+                        Great! You've successfully collected this item. Thank you for using our lost and found service.
+                        {% if claim.collected_at %}<br><small class="text-muted">Collected on {{ claim.collected_at|date:"F d, Y \a\t H:i" }}</small>{% endif %}
+                    {% else %}
+                        Unfortunately, this claim was not approved. The owner determined this item doesn't belong to you.
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Claim Timeline -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history me-2"></i>Claim Timeline
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6>Claim Submitted</h6>
+                            <p class="text-muted mb-0">{{ claim.created_at|date:"F d, Y \a\t H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if claim.status != 'PENDING' %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker {% if claim.status == 'APPROVED' %}bg-success{% else %}bg-danger{% endif %}"></div>
+                        <div class="timeline-content">
+                            <h6>
+                                {% if claim.status == 'APPROVED' %}Claim Approved{% else %}Claim Rejected{% endif %}
+                            </h6>
+                            <p class="text-muted mb-0">{{ claim.updated_at|date:"F d, Y \a\t H:i" }}</p>
+                            {% if claim.admin_response %}
+                            <p class="mt-2"><strong>Response:</strong> {{ claim.admin_response }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if claim.status == 'COLLECTED' %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-info"></div>
+                        <div class="timeline-content">
+                            <h6>Item Collected</h6>
+                            <p class="text-muted mb-0">{{ claim.collected_at|date:"F d, Y \a\t H:i" }}</p>
+                            {% if claim.collection_notes %}
+                            <p class="mt-2"><strong>Collection Notes:</strong> {{ claim.collection_notes }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% elif claim.status == 'APPROVED' %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-info"></div>
+                        <div class="timeline-content">
+                            <h6>Next: Arrange Pickup</h6>
+                            <p class="text-muted mb-0">Contact the owner to coordinate item return</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="row">
+            <!-- Your Claim Information -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-person-check me-2"></i>Your Claim Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Claim Message</label>
+                            <div class="border rounded p-3 bg-light">
+                                {{ claim.message|linebreaks }}
+                            </div>
+                        </div>
+                        
+                        {% if claim.evidence_photo %}
+                        <div class="mb-3">
+                            <label class="form-label text-muted">Evidence Photo</label>
+                            <div>
+                                <img src="{{ claim.evidence_photo.url }}" 
+                                     class="img-fluid rounded" 
+                                     style="max-height: 200px; cursor: pointer;" 
+                                     alt="Evidence photo"
+                                     data-bs-toggle="modal" 
+                                     data-bs-target="#evidenceModal">
+                                <div class="form-text">Click to view full size</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <div class="border-end">
+                                    <h6 class="text-muted mb-1">Submitted</h6>
+                                    <p class="fw-bold mb-0">{{ claim.created_at|date:"M d" }}</p>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <h6 class="text-muted mb-1">Status</h6>
+                                <span class="badge 
+                                    {% if claim.status == 'PENDING' %}bg-warning
+                                    {% elif claim.status == 'APPROVED' %}bg-success
+                                    {% elif claim.status == 'COLLECTED' %}bg-info
+                                    {% else %}bg-danger{% endif %} fs-6">
+                                    {{ claim.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Item Information -->
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-box-seam me-2"></i>Item Information
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex gap-2 mb-3">
+                            <span class="badge {% if claim.report.type == 'LOST' %}bg-danger{% else %}bg-success{% endif %}">
+                                {{ claim.report.get_type_display }}
+                            </span>
+                            <span class="badge {% if claim.report.status == 'OPEN' %}bg-primary{% elif claim.report.status == 'CLAIMED' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                {{ claim.report.get_status_display }}
+                            </span>
+                        </div>
+                        
+                        <h5>{{ claim.report.title }}</h5>
+                        
+                        <div class="mb-2">
+                            <i class="bi bi-geo-alt text-muted"></i>
+                            <span class="text-muted">{{ claim.report.location_text }}</span>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <i class="bi bi-calendar text-muted"></i>
+                            <span class="text-muted">{{ claim.report.date_event|date:"F d, Y" }}</span>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <i class="bi bi-tag text-muted"></i>
+                            <span class="text-muted">{{ claim.report.category.name }}</span>
+                        </div>
+                        
+                        <p class="mb-3">{{ claim.report.description|truncatewords:20 }}</p>
+                        
+                        {% if claim.report.photos.exists %}
+                        <div class="mb-3">
+                            <img src="{{ claim.report.photos.first.image.url }}" 
+                                 class="img-fluid rounded" 
+                                 style="max-height: 150px; object-fit: cover;" 
+                                 alt="{{ claim.report.title }}">
+                        </div>
+                        {% endif %}
+                        
+                        <a href="{% url 'lost_found:report_detail' claim.report.pk %}" 
+                           class="btn btn-outline-primary w-100">
+                            <i class="bi bi-eye"></i> View Full Item Details
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Owner Information (if approved or user owns the report) -->
+        {% if claim.status == 'APPROVED' or claim.report.reporter == user %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-person-circle me-2"></i>Contact Information
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if claim.status == 'APPROVED' %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Your claim has been approved!</strong> 
+                    Use the contact information below to arrange pickup with the owner.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Owner Information</h6>
+                        <p class="mb-2">
+                            <strong>Name:</strong> {{ claim.report.reporter.get_full_name|default:claim.report.reporter.username }}
+                        </p>
+                        {% if claim.report.reporter.email %}
+                        <p class="mb-2">
+                            <strong>Email:</strong> 
+                            <a href="mailto:{{ claim.report.reporter.email }}">{{ claim.report.reporter.email }}</a>
+                        </p>
+                        {% endif %}
+                        {% if claim.report.reporter.userprofile.phone_number %}
+                        <p class="mb-2">
+                            <strong>Phone:</strong> 
+                            <a href="tel:{{ claim.report.reporter.userprofile.phone_number }}">
+                                {{ claim.report.reporter.userprofile.phone_number }}
+                            </a>
+                        </p>
+                        {% endif %}
+                        {% if claim.report.reporter.userprofile.campus_location %}
+                        <p class="mb-0">
+                            <strong>Campus Location:</strong> {{ claim.report.reporter.userprofile.campus_location }}
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Pickup Guidelines</h6>
+                        <ul class="small text-muted mb-0">
+                            <li>Contact the owner within 48 hours</li>
+                            <li>Arrange to meet in a public location</li>
+                            <li>Bring valid ID for verification</li>
+                            <li>Be prepared to answer questions about the item</li>
+                            <li>Notify us once the item is returned</li>
+                        </ul>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-muted">
+                    <i class="bi bi-lock"></i> 
+                    Contact information will be available once your claim is approved.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Claim Actions -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="bi bi-gear me-2"></i>Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if claim.status == 'APPROVED' %}
+                        <button class="btn btn-success mb-2 me-2" onclick="showCollectedModal()">
+                            <i class="bi bi-check-circle"></i> Mark as Collected
+                        </button>
+                        {% elif claim.status == 'COLLECTED' %}
+                        <div class="alert alert-success d-flex align-items-center">
+                            <i class="bi bi-check-circle-fill me-2"></i>
+                            <div>
+                                <strong>Item Collected!</strong>
+                                {% if claim.collected_at %}
+                                <br><small class="text-muted">Collected on {{ claim.collected_at|date:"F d, Y \a\t H:i" }}</small>
+                                {% endif %}
+                                {% if claim.collection_notes %}
+                                <br><small class="text-muted">Notes: {{ claim.collection_notes }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if claim.status == 'PENDING' %}
+                        <button class="btn btn-outline-secondary mb-2 me-2" onclick="showContactForm()">
+                            <i class="bi bi-envelope"></i> Contact Owner
+                        </button>
+                        {% endif %}
+                        
+                        <button class="btn btn-outline-primary mb-2 me-2" onclick="window.print()">
+                            <i class="bi bi-printer"></i> Print Details
+                        </button>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted small">
+                            <p class="mb-1"><strong>Need Help?</strong></p>
+                            <p class="mb-0">
+                                Contact support at <a href="mailto:support@lostandfound.edu">support@lostandfound.edu</a>
+                                if you have questions about this claim.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Evidence Photo Modal -->
+{% if claim.evidence_photo %}
+<div class="modal fade" id="evidenceModal" tabindex="-1" aria-labelledby="evidenceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="evidenceModalLabel">Evidence Photo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img src="{{ claim.evidence_photo.url }}" class="img-fluid" alt="Evidence photo">
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Mark as Collected Modal -->
+<div class="modal fade" id="collectedModal" tabindex="-1" aria-labelledby="collectedModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="collectedModalLabel">Mark as Collected</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Confirm Collection:</strong> By marking this as collected, you're confirming that you have successfully received the item.
+                </div>
+                <form id="collectedForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="collectionNotes" class="form-label">Collection Notes (Optional)</label>
+                        <textarea class="form-control" id="collectionNotes" name="notes" rows="3" 
+                                  placeholder="Add any notes about the collection (condition, location, etc.)..."></textarea>
+                        <div class="form-text">These notes help improve our service and may be shared with the item owner.</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="confirmCollection()">
+                    <i class="bi bi-check-circle"></i> Confirm Collection
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.timeline {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--bs-border-color);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -2rem;
+    top: 0.2rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--bs-border-color);
+}
+
+.timeline-content {
+    padding-left: 1rem;
+}
+
+.timeline-content h6 {
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+}
+
+@media print {
+    .btn,
+    .card-header,
+    .modal,
+    .alert {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .timeline-marker {
+        box-shadow: none !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showCollectedModal() {
+    const modal = new bootstrap.Modal(document.getElementById('collectedModal'));
+    document.getElementById('collectionNotes').value = '';
+    modal.show();
+}
+
+function confirmCollection() {
+    const notes = document.getElementById('collectionNotes').value.trim();
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    // Show loading state
+    const confirmBtn = document.querySelector('#collectedModal .btn-success');
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+    confirmBtn.disabled = true;
+    
+    fetch('{% url "lost_found:mark_collected" claim.pk %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `notes=${encodeURIComponent(notes)}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            bootstrap.Modal.getInstance(document.getElementById('collectedModal')).hide();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('error', data.error || 'Failed to mark as collected');
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while processing your request');
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
+    });
+}
+
+function showContactForm() {
+    alert('Contact feature coming soon! For now, please use the dashboard messaging system or contact support for assistance.');
+}
+
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    
+    const container = document.querySelector('.col-lg-10');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-refresh page if claim is pending (every 30 seconds)
+    {% if claim.status == 'PENDING' %}
+    setInterval(function() {
+        // Check if there's an update to the claim
+        fetch('{% url "lost_found:claim_detail" claim.pk %}', {
+            method: 'HEAD'
+        }).then(response => {
+            // In a real implementation, you'd check for updates and refresh if needed
+            // For now, we'll just check every few minutes manually
+        });
+    }, 30000);
+    {% endif %}
+});
+</script>
+{% endblock %}

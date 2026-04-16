@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - University Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="hero-section bg-primary text-white rounded p-5 mb-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <h1 class="display-4">Lost Something? Found Something?</h1>
+            <p class="lead">Help connect lost items with their owners in our university community</p>
+            <div class="mt-4">
+                <a href="{% url 'lost_found:report_create' %}" class="btn btn-light btn-lg me-3">
+                    <i class="bi bi-plus-circle"></i> Report an Item
+                </a>
+                <a href="{% url 'lost_found:report_list' %}" class="btn btn-outline-light btn-lg">
+                    <i class="bi bi-search"></i> Browse Items
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-4 text-center">
+            <i class="bi bi-search display-1"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Search -->
+<div class="row mb-5">
+    <div class="col-lg-8 mx-auto">
+        <div class="card">
+            <div class="card-body">
+                <form method="GET" action="{% url 'lost_found:report_list' %}">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <input type="text" class="form-control form-control-lg" 
+                                   name="q" placeholder="Search for lost or found items...">
+                        </div>
+                        <div class="col-md-4">
+                            <button type="submit" class="btn btn-primary btn-lg w-100">
+                                <i class="bi bi-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-5">
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-file-text text-primary" style="font-size: 2rem;"></i>
+                <h3 class="mt-3">{{ stats.total_reports }}</h3>
+                <p class="text-muted">Total Reports</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                <h3 class="mt-3">{{ stats.resolved_reports }}</h3>
+                <p class="text-muted">Items Reunited</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-clock text-warning" style="font-size: 2rem;"></i>
+                <h3 class="mt-3">{{ stats.active_reports }}</h3>
+                <p class="text-muted">Active Reports</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Categories -->
+<div class="mb-5">
+    <h2 class="mb-4">Browse by Category</h2>
+    <div class="row">
+        {% for category in categories %}
+        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
+            <a href="{% url 'lost_found:report_list' %}?category={{ category.id }}" 
+               class="text-decoration-none">
+                <div class="card h-100 text-center hover-shadow">
+                    <div class="card-body">
+                        <i class="{{ category.icon }} text-primary" style="font-size: 2rem;"></i>
+                        <h6 class="mt-3">{{ category.name }}</h6>
+                        <small class="text-muted">{{ category.report_count }} items</small>
+                    </div>
+                </div>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Recent Items -->
+<div class="row">
+    <div class="col-md-6">
+        <h3 class="mb-4">Recently Lost Items</h3>
+        <div class="row">
+            {% for item in recent_lost %}
+            <div class="col-md-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">{{ item.title }}</h6>
+                                <p class="card-text small text-muted">
+                                    <i class="bi bi-geo-alt"></i> {{ item.location_text }}
+                                </p>
+                            </div>
+                            <span class="badge bg-danger">LOST</span>
+                        </div>
+                        <a href="{% url 'lost_found:report_detail' item.pk %}" 
+                           class="btn btn-sm btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">No recent lost items.</p>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <h3 class="mb-4">Recently Found Items</h3>
+        <div class="row">
+            {% for item in recent_found %}
+            <div class="col-md-12 mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="card-title">{{ item.title }}</h6>
+                                <p class="card-text small text-muted">
+                                    <i class="bi bi-geo-alt"></i> {{ item.location_text }}
+                                </p>
+                            </div>
+                            <span class="badge bg-success">FOUND</span>
+                        </div>
+                        <a href="{% url 'lost_found:report_detail' item.pk %}" 
+                           class="btn btn-sm btn-outline-primary">View Details</a>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted">No recent found items.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<style>
+.hover-shadow:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: box-shadow 0.2s;
+}
+</style>
+{% endblock %}

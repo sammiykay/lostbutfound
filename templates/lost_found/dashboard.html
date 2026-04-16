@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard - Lost & Found Portal{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Dashboard</h2>
+    <a href="{% url 'lost_found:report_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Report New Item
+    </a>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-file-text text-primary fs-1"></i>
+                <h4 class="mt-2">{{ my_reports|length }}</h4>
+                <p class="text-muted">My Reports</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-hand-thumbs-up text-success fs-1"></i>
+                <h4 class="mt-2">{{ my_claims|length }}</h4>
+                <p class="text-muted">My Claims</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-clock-history text-warning fs-1"></i>
+                <h4 class="mt-2">{{ pending_claims|length }}</h4>
+                <p class="text-muted">Pending Review</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center h-100">
+            <div class="card-body">
+                <i class="bi bi-bell text-info fs-1"></i>
+                <h4 class="mt-2">{{ notifications|length }}</h4>
+                <p class="text-muted">Notifications</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- My Reports -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>My Reports</h5>
+                <a href="{% url 'lost_found:report_list' %}?reporter={{ user.id }}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if my_reports %}
+                    {% for report in my_reports %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge {% if report.type == 'LOST' %}bg-danger{% else %}bg-success{% endif %}">
+                                        {{ report.get_type_display }}
+                                    </span>
+                                    <span class="badge {% if report.status == 'OPEN' %}bg-primary{% elif report.status == 'CLAIMED' %}bg-warning{% elif report.status == 'RETURNED' %}bg-success{% else %}bg-dark{% endif %}">{{ report.get_status_display }}</span>
+                                    {% if not report.is_approved %}
+                                        <span class="badge bg-warning">Pending Approval</span>
+                                    {% endif %}
+                                </div>
+                                <h6 class="mb-1">{{ report.title|truncatechars:40 }}</h6>
+                                <small class="text-muted">
+                                    <i class="bi bi-geo-alt"></i> {{ report.location_text|truncatechars:30 }} • 
+                                    {{ report.created_at|naturaltime }}
+                                </small>
+                            </div>
+                            <div>
+                                <a href="{% url 'lost_found:report_detail' report.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-file-text text-muted fs-1"></i>
+                        <p class="text-muted mt-2">No reports yet</p>
+                        <a href="{% url 'lost_found:report_create' %}" class="btn btn-primary">Report Your First Item</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- My Claims -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>My Claims</h5>
+                <a href="{% url 'lost_found:claim_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if my_claims %}
+                    {% for claim in my_claims %}
+                        <div class="d-flex justify-content-between align-items-center border-bottom py-2">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center gap-2 mb-1">
+                                    <span class="badge {% if claim.report.type == 'LOST' %}bg-danger{% else %}bg-success{% endif %}">
+                                        {{ claim.report.get_type_display }}
+                                    </span>
+                                    <span class="badge {% if claim.status == 'PENDING' %}bg-warning{% else %}bg-success{% endif %}">
+                                        {{ claim.get_status_display }}
+                                    </span>
+                                </div>
+                                <h6 class="mb-1">{{ claim.report.title|truncatechars:40 }}</h6>
+                                <small class="text-muted">
+                                    Claimed {{ claim.created_at|naturaltime }}
+                                    {% if claim.resolved_at %} • Resolved {{ claim.resolved_at|naturaltime }}{% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                <a href="{% url 'lost_found:report_detail' claim.report.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-hand-thumbs-up text-muted fs-1"></i>
+                        <p class="text-muted mt-2">No claims yet</p>
+                        <a href="{% url 'lost_found:report_list' %}" class="btn btn-primary">Browse Items</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Claims on My Reports -->
+{% if pending_claims %}
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Pending Claims on Your Reports</h5>
+        <small class="text-muted">These claims need your review</small>
+    </div>
+    <div class="card-body">
+        {% for claim in pending_claims %}
+            <div class="border rounded p-3 mb-3">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <h6 class="mb-0">{{ claim.report.title }}</h6>
+                            <span class="badge bg-warning">Pending Review</span>
+                        </div>
+                        <p class="mb-2">
+                            <strong>Claimant:</strong> {{ claim.claimant.get_full_name|default:claim.claimant.username }}
+                        </p>
+                        <p class="mb-2">{{ claim.message|truncatechars:150 }}</p>
+                        <small class="text-muted">Submitted {{ claim.created_at|naturaltime }}</small>
+                    </div>
+                    <div class="ms-3">
+                        <a href="{% url 'lost_found:report_detail' claim.report.pk %}" class="btn btn-primary btn-sm">
+                            Review Claim
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Notifications -->
+{% if notifications %}
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Recent Notifications</h5>
+        <button class="btn btn-sm btn-outline-secondary" onclick="markAllRead()">
+            Mark All Read
+        </button>
+    </div>
+    <div class="card-body">
+        <div id="notifications-list">
+            {% for notification in notifications %}
+                <div class="d-flex justify-content-between align-items-start border-bottom py-2 notification-item" 
+                     data-id="{{ notification.id }}">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-bell-fill text-primary"></i>
+                            <span>{{ notification.verb }}</span>
+                        </div>
+                        <small class="text-muted">{{ notification.created_at|naturaltime }}</small>
+                    </div>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="markRead({{ notification.id }})">
+                        <i class="bi bi-check"></i>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Quick Actions</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3">
+                <a href="{% url 'lost_found:report_create' %}" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i><br>Report Item
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'lost_found:report_list' %}" class="btn btn-outline-secondary w-100 mb-2">
+                    <i class="bi bi-search"></i><br>Browse Items
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'lost_found:profile' %}" class="btn btn-outline-info w-100 mb-2">
+                    <i class="bi bi-person-circle"></i><br>Edit Profile
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'lost_found:faq' %}" class="btn btn-outline-warning w-100 mb-2">
+                    <i class="bi bi-question-circle"></i><br>Help & FAQ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Notification management
+function markRead(notificationId) {
+    fetch('/api/notifications/mark-read/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ notification_id: notificationId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.querySelector(`[data-id="${notificationId}"]`).remove();
+            updateNotificationCount();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function markAllRead() {
+    const notificationIds = Array.from(document.querySelectorAll('.notification-item'))
+        .map(item => item.dataset.id);
+    
+    fetch('/api/notifications/mark-read/', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({ mark_all: true })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('notifications-list').innerHTML = 
+                '<p class="text-muted text-center">No new notifications</p>';
+            updateNotificationCount();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function updateNotificationCount() {
+    // Update notification badge in navbar if it exists
+    const badge = document.querySelector('.notification-badge');
+    if (badge) {
+        const currentCount = parseInt(badge.textContent) - 1;
+        if (currentCount <= 0) {
+            badge.style.display = 'none';
+        } else {
+            badge.textContent = currentCount;
+        }
+    }
+}
+
+// Auto-refresh for real-time updates (every 30 seconds)
+setInterval(() => {
+    fetch('/api/notifications/')
+        .then(response => response.json())
+        .then(data => {
+            // Update notification count or reload if there are new notifications
+            // This is a simple implementation - in production you'd want more sophisticated real-time updates
+        })
+        .catch(error => console.error('Error checking notifications:', error));
+}, 30000);
+</script>
+{% endblock %}
