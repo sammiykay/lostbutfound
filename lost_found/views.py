@@ -836,3 +836,12 @@ def generate_qr_code(request, pk):
     buffer.seek(0)
     
     return HttpResponse(buffer.getvalue(), content_type="image/png")
+
+
+
+def logout_view(request):
+    """Custom logout view to add a message"""
+    from django.contrib.auth import logout
+    logout(request)
+    messages.info(request, "You have been logged out.")
+    return redirect('lost_found:home')

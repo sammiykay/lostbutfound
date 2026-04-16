@@ -66,4 +66,7 @@ urlpatterns = [
     # Notification API endpoints
     path('api/notifications/', views.notifications_api, name='notifications_api'),
     path('api/notifications/mark-read/', views.mark_notifications_read, name='mark_notifications_read'),
+
+    path('accounts/logout/', views.logout_view, name='logout'),
 ]
+
